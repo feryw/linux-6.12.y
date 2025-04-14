@@ -320,7 +320,7 @@ static const struct iw_priv_args rP2PIwPrivTable[] = {
 	 {IOCTL_GET_DRIVER, IW_PRIV_TYPE_CHAR | 2000, IW_PRIV_TYPE_CHAR | 2000, "driver"},
 };
 
-
+#if 0
 const struct iw_handler_def mtk_p2p_wext_handler_def = {
 	.num_standard = 0,
 
@@ -335,7 +335,7 @@ const struct iw_handler_def mtk_p2p_wext_handler_def = {
 #endif /* CONFIG_WEXT_PRIV || LINUX_VERSION_CODE <= 2.6.32 */
 	.get_wireless_stats = NULL,
 };
-
+#endif
 
 #ifdef CONFIG_PM
 static const struct wiphy_wowlan_support mtk_p2p_wowlan_support = {
