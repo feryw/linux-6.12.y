@@ -511,6 +511,14 @@
 	status = "okay";
 };
 
+&pd_gpu {
+	domain-supply = <&vdd_gpu_s0>;
+};
+
+&pd_npu {
+	domain-supply = <&vdd_npu_s0>;
+};
+
 &pinctrl {
 	hdmirx {
 		hdmirx_det: hdmirx-det {
@@ -627,7 +635,7 @@
 	status = "okay";
 };
 
-&rknn_core_top {
+&rknn_core_0 {
 	npu-supply = <&vdd_npu_s0>;
 	sram-supply = <&vdd_npu_mem_s0>;
 	status = "okay";
