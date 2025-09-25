@@ -419,23 +419,27 @@ static int meson8b_init_prg_eth(struct meson8b_dwmac *dwmac)
 	return 0;
 }
 
-int cmdline_mc_val = -1;
-module_param_named(mc_val, cmdline_mc_val, int, 0); // 0 is permission? dwmac-meson8b.mc_val=0x1621
-MODULE_PARM_DESC(mc_val, "Kernel commandline mc_val. Is override value for the complete (u32|0xffff_ffff) ETH_REG0 register");
-
-int cmdline_cali_val = -1;
-module_param_named(cali_val, cmdline_cali_val, int, 0); // 0 is permission? dwmac-meson8b.cali_val = 0x40000
-MODULE_PARM_DESC(cali_val, "Kernel commandline cali_val. Is override value for the complete (u32|0xffff_ffff) ETH_REG1 register");
-
-static void debug_show_regs(struct meson8b_dwmac* dwmac, char* state_name)
+static int meson8b_prg_eth_override(struct meson8b_dwmac *dwmac)
 {
-	u32 tmp_val;
-	
-	tmp_val = readl(dwmac->regs + PRG_ETH0);
-	dev_info(dwmac->dev, "DEVMFC:  %s eth reg0 value: 0x%08X\n", state_name, tmp_val);
+	struct device_node *np = dwmac->dev->of_node;
+	u32 override[2] = { 0 };
+	int ret;
 
-	tmp_val = readl(dwmac->regs + PRG_ETH1);
-	dev_info(dwmac->dev, "DEVMFC:  %s eth reg1 value: 0x%08X\n", state_name, tmp_val);
+	ret = of_property_read_u32_array(np, "amlogic,prg-eth-reg0", override,
+					 2);
+	if (!ret) {
+		meson8b_dwmac_mask_bits(dwmac, PRG_ETH0, override[0],
+					override[1]);
+	}
+
+	ret = of_property_read_u32_array(np, "amlogic,prg-eth-reg1", override,
+					 2);
+	if (!ret) {
+		meson8b_dwmac_mask_bits(dwmac, PRG_ETH1, override[0],
+					override[1]);
+	}
+
+	return 0;
 }
 
 static int meson8b_dwmac_probe(struct platform_device *pdev)
@@ -523,6 +527,8 @@ static int meson8b_dwmac_probe(struct platform_device *pdev)
 	ret = meson8b_init_prg_eth(dwmac);
 	if (ret)
 		return ret;
+
+	meson8b_prg_eth_override(dwmac);
 
 	plat_dat->bsp_priv = dwmac;
 	

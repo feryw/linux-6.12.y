@@ -183,6 +183,15 @@ void dw_pcie_version_detect(struct dw_pcie *pci)
 {
 	u32 ver;
 
+	/*
+	 * Some boards with Amlogic A311D SoC's AHCI controller breaks
+	 * if the version register is read.
+	 * Skip detection for some boards marked with skip-version-detect
+	 * in the device tree.
+	 */
+	if (of_property_read_bool(pci->dev->of_node, "skip-version-detect"))
+		return;
+
 	/* The content of the CSR is zero on DWC PCIe older than v4.70a */
 	ver = dw_pcie_readl_dbi(pci, PCIE_VERSION_NUMBER);
 	if (!ver)
@@ -654,6 +663,14 @@ int dw_pcie_wait_for_link(struct dw_pcie *pci)
 		dev_info(pci->dev, "Phy link never came up\n");
 		return -ETIMEDOUT;
 	}
+
+	/*
+	 * As per PCIe r6.0, sec 6.6.1, a Downstream Port that supports Link
+	 * speeds greater than 5.0 GT/s, software must wait a minimum of 100 ms
+	 * after Link training completes before sending a Configuration Request.
+	 */
+	if (pci->max_link_speed > 2)
+		msleep(PCIE_RESET_CONFIG_WAIT_MS);
 
 	offset = dw_pcie_find_capability(pci, PCI_CAP_ID_EXP);
 	val = dw_pcie_readw_dbi(pci, offset + PCI_EXP_LNKSTA);

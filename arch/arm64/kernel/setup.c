@@ -324,8 +324,8 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 	efi_init();
 
 	if (!efi_enabled(EFI_BOOT)) {
-		if ((u64)_text % MIN_KIMG_ALIGN)
-			pr_warn(FW_BUG "Kernel image misaligned at boot, please fix your bootloader!");
+		// if ((u64)_text % MIN_KIMG_ALIGN)
+		// 	pr_warn(FW_BUG "Kernel image misaligned at boot, please fix your bootloader!");
 		WARN_TAINT(mmu_enabled_at_boot, TAINT_FIRMWARE_WORKAROUND,
 			   FW_BUG "Booted with MMU enabled!");
 	}

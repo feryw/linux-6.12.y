@@ -433,7 +433,7 @@
 	status = "okay";
 };
 
-&rknn_mmu_top {
+&rknn_mmu_0 {
 	status = "okay";
 };
 

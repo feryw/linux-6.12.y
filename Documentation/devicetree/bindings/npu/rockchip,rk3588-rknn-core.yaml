@@ -101,7 +101,7 @@ examples:
                  <&scmi_clk SCMI_CLK_NPU>, <&cru PCLK_NPU_ROOT>;
         clock-names = "aclk", "hclk", "npu", "pclk";
         interrupts = <GIC_SPI 110 IRQ_TYPE_LEVEL_HIGH 0>;
-        iommus = <&rknn_mmu_top>;
+        iommus = <&rknn_mmu_0>;
         npu-supply = <&vdd_npu_s0>;
         power-domains = <&power RK3588_PD_NPUTOP>;
         resets = <&cru SRST_A_RKNN0>, <&cru SRST_H_RKNN0>;

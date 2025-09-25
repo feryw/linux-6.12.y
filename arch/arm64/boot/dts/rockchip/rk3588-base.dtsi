@@ -1155,11 +1155,11 @@
 		resets = <&cru SRST_A_RKNN0>, <&cru SRST_H_RKNN0>;
 		reset-names = "srst_a", "srst_h";
 		power-domains = <&power RK3588_PD_NPUTOP>;
-		iommus = <&rknn_mmu_top>;
+		iommus = <&rknn_mmu_0>;
 		status = "disabled";
 	};
 
-	rknn_mmu_top: iommu@fdab9000 {
+	rknn_mmu_0: iommu@fdab9000 {
 		compatible = "rockchip,rk3588-iommu", "rockchip,rk3568-iommu";
 		reg = <0x0 0xfdab9000 0x0 0x100>,
 		      <0x0 0xfdaba000 0x0 0x100>;
