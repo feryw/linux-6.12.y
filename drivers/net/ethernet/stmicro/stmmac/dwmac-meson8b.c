@@ -68,37 +68,13 @@
  */
 #define PRG_ETH0_ADJ_SKEW		GENMASK(24, 20)
 
-#define PRG_ETH0_START_CALIBRATION	BIT(25)
-
-    /* 0: falling edge, 1: rising edge */
-#define PRG_ETH0_TEST_EDGE		BIT(26)
-
-/* Select one signal from {RXDV, RXD[3:0]} to calibrate */
-#define PRG_ETH0_SIGNAL_TO_CALIBRATE	GENMASK(29, 27)
-
 #define PRG_ETH1			0x4
-
-/* Signal switch position in 1ns resolution */
-#define PRG_ETH1_SIGNAL_SWITCH_POSITION	GENMASK(4, 0)
-
-/* RXC (RX clock) length in 1ns resolution */
-#define PRG_ETH1_RX_CLK_LENGTH		GENMASK(9, 5)
-
-#define PRG_ETH1_CALI_WAITING_FOR_EVENT	BIT(10)
-
-#define PRG_ETH1_SIGNAL_UNDER_TEST	GENMASK(13, 11)
-
-/* 0: falling edge, 1: rising edge */
-#define PRG_ETH1_RESULT_EDGE		BIT(14)
-
-#define PRG_ETH1_RESULT_IS_VALID	BIT(15)
-
 
 /* Defined for adding a delay to the input RX_CLK for better timing.
  * Each step is 200ps. These bits are used with external RGMII PHYs
  * because RGMII RX only has the small window. cfg_rxclk_dly can
  * adjust the window between RX_CLK and RX_DATA and improve the stability
- * of "rx data valid". only valid on G12A and later?
+ * of "rx data valid".
  */
 #define PRG_ETH1_CFG_RXCLK_DLY		GENMASK(19, 16)
 
@@ -330,7 +306,6 @@ static int meson8b_init_rgmii_delays(struct meson8b_dwmac *dwmac)
 		cfg_rxclk_dly = 0;
 		break;
 	case PHY_INTERFACE_MODE_RGMII_TXID:
-		dev_info(dwmac->dev, "DEVMFC: %s Selected RGMII-TXID phy-mode, so not setting TX clock skew on mac side\n", __func__);
 		delay_config = rx_adj_config;
 		break;
 	case PHY_INTERFACE_MODE_RGMII_ID:
@@ -345,8 +320,6 @@ static int meson8b_init_rgmii_delays(struct meson8b_dwmac *dwmac)
 	}
 
 	if (delay_config & PRG_ETH0_ADJ_ENABLE) {
-		dev_info(dwmac->dev, "DEVMFC: %s Old fashioned RX delay selected, configuring timing adjustment clock\n", __func__);
-
 		if (!dwmac->timing_adj_clk) {
 			dev_err(dwmac->dev,
 				"The timing-adjustment clock is mandatory for the RX delay re-timing\n");
@@ -362,9 +335,6 @@ static int meson8b_init_rgmii_delays(struct meson8b_dwmac *dwmac)
 			return ret;
 		}
 	}
-
-	if(delay_config & PRG_ETH0_TXDLY_MASK)
-		dev_info(dwmac->dev, "DEVMFC: %s, enabling mac side TX clock delay: %d\n", __func__, dwmac->tx_delay_ns);
 
 	meson8b_dwmac_mask_bits(dwmac, PRG_ETH0, PRG_ETH0_TXDLY_MASK |
 				PRG_ETH0_ADJ_ENABLE | PRG_ETH0_ADJ_SETUP |
@@ -449,8 +419,6 @@ static int meson8b_dwmac_probe(struct platform_device *pdev)
 	struct meson8b_dwmac *dwmac;
 	int ret;
 
-	//pr_info("DEVMFC: %s\n", __func__);
-	
 	ret = stmmac_get_platform_resources(pdev, &stmmac_res);
 	if (ret)
 		return ret;
@@ -531,29 +499,8 @@ static int meson8b_dwmac_probe(struct platform_device *pdev)
 	meson8b_prg_eth_override(dwmac);
 
 	plat_dat->bsp_priv = dwmac;
-	
-	ret = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
-	if (ret)
-		return ret;
 
-	debug_show_regs(dwmac, "after stmmac_dvr_probe");
-	
-	/* DEVMMFC: debug */
-	if (cmdline_mc_val > -1) {
-		dev_info(dwmac->dev, "DEVMFC: set reg0 value to dwmac-meson8b.mc_val: 0x%08X\n", cmdline_mc_val);
-		writel(cmdline_mc_val, dwmac->regs + PRG_ETH0);
-	}
-		
-	if (cmdline_cali_val > -1) {
-		dev_info(dwmac->dev, "DEVMFC: set reg1 value to dwmac-meson8b.cali_val: 0x%08X\n", cmdline_cali_val);
-		writel(cmdline_cali_val, dwmac->regs + PRG_ETH1);
-	}
-	
-	debug_show_regs(dwmac, "resulting");
-	/* end debug */
-
-	return 0;
-	
+	return stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
 }
 
 static const struct meson8b_dwmac_data meson8b_dwmac_data = {
