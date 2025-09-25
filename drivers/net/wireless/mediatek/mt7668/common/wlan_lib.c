@@ -967,7 +967,10 @@ WLAN_STATUS wlanProcessCommandQueue(IN P_ADAPTER_T prAdapter, IN P_QUE_T prCmdQu
 		case COMMAND_TYPE_SECURITY_FRAME:
 			/* inquire with QM */
 			prMsduInfo = prCmdInfo->prMsduInfo;
-			if(prMsduInfo->u2FrameLength > 1408) 
+			if(prMsduInfo->u2FrameLength > 1408) {
+					pr_info("%s securoty fram too BIG u2FrameLength[%d]\n", __func__, prMsduInfo->u2FrameLength);
+			}
+
 			eFrameAction = qmGetFrameAction(prAdapter, prMsduInfo->ucBssIndex,
 							prMsduInfo->ucStaRecIndex, NULL, FRAME_TYPE_802_1X,
 							prCmdInfo->u2InfoBufLen);
@@ -976,7 +979,9 @@ WLAN_STATUS wlanProcessCommandQueue(IN P_ADAPTER_T prAdapter, IN P_QUE_T prCmdQu
 		case COMMAND_TYPE_MANAGEMENT_FRAME:
 			/* inquire with QM */
 			prMsduInfo = prCmdInfo->prMsduInfo;
-			if(prMsduInfo->u2FrameLength > 1408) 
+			if(prMsduInfo->u2FrameLength > 1408) {
+					pr_info("%s command frame too BIG u2FrameLength[%d]\n", __func__, prMsduInfo->u2FrameLength);
+			}
 			eFrameAction = qmGetFrameAction(prAdapter, prMsduInfo->ucBssIndex,
 							prMsduInfo->ucStaRecIndex, prMsduInfo, FRAME_TYPE_MMPDU,
 							prMsduInfo->u2FrameLength);

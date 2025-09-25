@@ -50,6 +50,7 @@ endif
 
 
 ifeq ($(PLATFORM),AML950X2)
+$(warning PLATFORM is $(PLATFORM))
 LINUX_SRC = $(KERNEL_SRC)
 endif
 
@@ -104,7 +105,7 @@ CFG_P2P_SCAN_REPORT_ALL_BSS=0
 # Support to change sta, p2p, ap interface names
 # y: enable, n: disable
 # eg. insmod wlan_mt7668_usb.ko sta=wlan p2p=p2p ap=ap
-CFG_DRIVER_INF_NAME_CHANGE=n
+CFG_DRIVER_INF_NAME_CHANGE=y
 
 CFG_CHIP_RESET_SUPPORT=0
 
@@ -258,14 +259,18 @@ CONFIG_MTK_WIFI_MCC_SUPPORT=y
 CONFIG_MTK_WPA3_SUPPORT=y
 ifeq ($(CONFIG_MTK_WIFI_MCC_SUPPORT), y)
     ccflags-y += -DCFG_SUPPORT_CHNL_CONFLICT_REVISE=0
+     $(info DCFG_SUPPORT_CHNL_CONFLICT_REVISE=0)
 else
     ccflags-y += -DCFG_SUPPORT_CHNL_CONFLICT_REVISE=1
+     $(info DCFG_SUPPORT_CHNL_CONFLICT_REVISE=1)
 endif
 
 ifeq ($(CONFIG_MTK_AEE_FEATURE), y)
     ccflags-y += -DCFG_SUPPORT_AEE=1
+    $(info DCFG_SUPPORT_AEE=1)
 else
     ccflags-y += -DCFG_SUPPORT_AEE=0
+    $(info DCFG_SUPPORT_AEE=0)
 endif
 
 ifeq ($(CONFIG_MTK_WPA3_SUPPORT), y)
@@ -316,12 +321,16 @@ endif
 
 ifneq ($(CFG_CFG80211_VERSION),)
 VERSION_STR = $(subst ",,$(subst ., , $(subst -, ,$(subst v,,$(CFG_CFG80211_VERSION)))))
+$(info VERSION_STR=$(VERSION_STR))
 X = $(firstword $(VERSION_STR))
 Y = $(word 2 ,$(VERSION_STR))
 Z = $(word 3 ,$(VERSION_STR))
 VERSION := $(shell echo "$$(( $X * 65536 + $Y * 256 + $Z))" )
 ccflags-y += -DCFG_CFG80211_VERSION=$(VERSION)
+$(info DCFG_CFG80211_VERSION=$(VERSION))
 endif
+
+$(info HIF=$(CONFIG_MTK_COMBO_WIFI_HIF))
 
 ifeq ($(CONFIG_MTK_PASSPOINT_R1_SUPPORT), y)
     ccflags-y += -DCFG_SUPPORT_PASSPOINT=1
@@ -359,19 +368,17 @@ endif
 ifeq ($(MODULE_NAME),)
 	MODULE_NAME := wlan_$(shell echo $(strip $(WLAN_CHIP_ID)) | tr A-Z a-z)_$(CONFIG_MTK_COMBO_WIFI_HIF)
 endif
+#src = $(LINUX_SRC)/$(M)
 
 ccflags-y += -DDBG=0
-ccflags-y += -I$(srctree)/$(src)/include/nic
-ccflags-y += -I$(srctree)/$(src)/include/mgmt
-ccflags-y += -I$(srctree)/$(src)/os/linux/include
-ccflags-y += -I$(srctree)/$(src)/os -I$(src)/os/linux/include
-ccflags-y += -I$(srctree)/$(src)/include -I$(src)/include/nic -I$(srctree)/$(src)/include/mgmt -I$(srctree)/$(src)/include/chips
+ccflags-y += -I$(src)/os -I$(src)/os/linux/include
+ccflags-y += -I$(src)/include -I$(src)/include/nic -I$(src)/include/mgmt -I$(src)/include/chips
 ifeq ($(CONFIG_MTK_COMBO_WIFI_HIF), sdio)
-ccflags-y += -I$(srctree)/$(src)/os/linux/hif/sdio/include
+ccflags-y += -I$(src)/os/linux/hif/sdio/include
 else ifeq ($(CONFIG_MTK_COMBO_WIFI_HIF), pcie)
-ccflags-y += -I$(srctree)/$(src)/os/linux/hif/pcie/include
+ccflags-y += -I$(src)/os/linux/hif/pcie/include
 else ifeq ($(CONFIG_MTK_COMBO_WIFI_HIF), usb)
-ccflags-y += -I$(srctree)/$(src)/os/linux/hif/usb/include
+ccflags-y += -I$(src)/os/linux/hif/usb/include
 endif
 
 ifneq ($(PLATFORM_FLAGS), )
@@ -382,6 +389,7 @@ ifeq ($(CONFIG_MTK_WIFI_ONLY),$(filter $(CONFIG_MTK_WIFI_ONLY),m y))
 obj-$(CONFIG_MTK_WIFI_ONLY) += $(MODULE_NAME).o
 else
 obj-$(CONFIG_MTK_COMBO_WIFI) += $(MODULE_NAME).o
+#obj-y += $(MODULE_NAME).o
 endif
 
 # ---------------------------------------------------
@@ -521,14 +529,17 @@ $(MODULE_NAME)-objs  += $(CHIPS_OBJS)
 #
 ifeq ($(CONFIG_MTK_PREALLOC_MEMORY), y)
 ccflags-y += -DCFG_PREALLOC_MEMORY
-ccflags-y += -I$(srctree)/$(src)/prealloc/include
+ccflags-y += -I$(src)/prealloc/include
 MODULE_NAME_PREALLOC = mtprealloc
 PREALLOC_OBJS := prealloc/prealloc.o
 $(MODULE_NAME_PREALLOC)-objs += $(PREALLOC_OBJS)
 obj-m += $(MODULE_NAME_PREALLOC).o
 endif
 
+#DRIVER_BUILD_DATE=$(shell date +%Y%m%d%H%M%S)
 ccflags-y += -DDRIVER_BUILD_DATE=${date}
+
+
 
 ##############################################################
 # Compile settings
@@ -537,12 +548,19 @@ ccflags-y += -DDRIVER_BUILD_DATE=${date}
 all: modules
 
 modules:
+	@echo cross_comple = $(CROSS_COMPILE)
+	@echo CFLAGS = $(CFLAGS)
+	@echo EXTRA_CFLAGS = $(EXTRA_CFLAGS)
 	$(MAKE) -C $(KERNEL_SRC) M=$(shell pwd) MODULE_NAME=$(MODULE_NAME) PLATFORM_FLAGS="$(PLATFORM_FLAGS)" modules
 
 modules_install:
 	@$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install
 	mkdir -p ${OUT_DIR}/../vendor_lib/modules
 	cd ${OUT_DIR}/$(M)/; find -name $(MODULE_NAME).ko -exec cp {} ${OUT_DIR}/../vendor_lib/modules/$(MODULE_NAME).ko \;
+
+
+
+
 
 driver:
 	+make -C $(KSRC) M=$(shell pwd)/$(DRIVER_DIR) PLATFORM_FLAGS="$(PLATFORM_FLAGS)" WLAN_CHIP_ID=$(WLAN_CHIP_ID) modules
